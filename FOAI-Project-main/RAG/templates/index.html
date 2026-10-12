@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign2Speak Chatbot</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #f8fafc;
+    --primary: #2563eb;
+    --bot-bg: #e2e8f0;
+    --user-bg: #2563eb;
+    --text: #1e293b;
+    --radius: 16px;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+  }
+
+  .chat-container {
+    width: 100%;
+    max-width: 480px;
+    height: 80vh;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+  }
+
+  .chat-header {
+    padding: 18px;
+    background: #fff;
+    border-bottom: 1px solid #e2e8f0;
+    font-weight: 600;
+    color: var(--primary);
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .chat-header img {
+    width: 28px;
+    height: 28px;
+  }
+
+  .chat-messages {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    background: #f9fafb;
+    scroll-behavior: smooth;
+  }
+
+  .message {
+    display: flex;
+    margin-bottom: 14px;
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .message.user {
+    justify-content: flex-end;
+  }
+
+  .message.bot {
+    justify-content: flex-start;
+  }
+
+  .bubble {
+    max-width: 75%;
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    line-height: 1.4;
+    font-size: 0.95rem;
+    word-wrap: break-word;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  }
+
+  .message.user .bubble {
+    background: var(--user-bg);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+
+  .message.bot .bubble {
+    background: var(--bot-bg);
+    color: var(--text);
+    border-bottom-left-radius: 4px;
+  }
+
+  .typing {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    background: #94a3b8;
+    border-radius: 50%;
+    animation: blink 1.4s infinite both;
+  }
+
+  .dot:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  .dot:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+
+  @keyframes blink {
+    0%, 80%, 100% { opacity: 0.2; transform: scale(1); }
+    40% { opacity: 1; transform: scale(1.3); }
+  }
+
+  .chat-input {
+    position: relative;
+    padding: 12px;
+    background: #fff;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+  }
+
+  .chat-input input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 30px;
+    outline: none;
+    font-size: 0.95rem;
+    transition: border 0.2s;
+  }
+
+  .chat-input input:focus {
+    border-color: var(--primary);
+  }
+
+  .chat-input button {
+    margin-left: 10px;
+    border: none;
+    background: var(--primary);
+    color: #fff;
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+  }
+
+  .chat-input button:hover {
+    background: #1d4ed8;
+    transform: scale(1.05);
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="chat-container">
+  <div class="chat-header">
+    <img src="https://cdn-icons-png.flaticon.com/512/4712/4712027.png" alt="bot icon">
+    Sign2Speak Chatbot
+  </div>
+
+  <div class="chat-messages" id="chatMessages"></div>
+
+  <div class="chat-input">
+    <input type="text" id="msg" placeholder="Type your message..." />
+    <button id="send">➤</button>
+  </div>
+</div>
+
+<script>
+  const chatMessages = document.getElementById('chatMessages');
+  const msgInput = document.getElementById('msg');
+
+  function addMessage(text, sender='bot') {
+    const msgDiv = document.createElement('div');
+    msgDiv.classList.add('message', sender);
+
+    const bubbleDiv = document.createElement('div');
+    bubbleDiv.classList.add('bubble');
+    bubbleDiv.textContent = text;
+
+    msgDiv.appendChild(bubbleDiv);
+    chatMessages.appendChild(msgDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function showTyping() {
+    const typingDiv = document.createElement('div');
+    typingDiv.classList.add('message', 'bot');
+    typingDiv.innerHTML = `
+      <div class="bubble typing">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>`;
+    chatMessages.appendChild(typingDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    return typingDiv;
+  }
+
+  async function sendMessage() {
+    const msg = msgInput.value.trim();
+    if (!msg) return;
+
+    addMessage(msg, 'user');
+    msgInput.value = '';
+
+    const typing = showTyping();
+
+    try {
+      const res = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg })
+      });
+      const data = await res.json();
+
+      chatMessages.removeChild(typing);
+      if (data.error) addMessage('Error: ' + data.error, 'bot');
+      else addMessage(data.answer, 'bot');
+    } catch {
+      chatMessages.removeChild(typing);
+      addMessage('Error connecting to server.', 'bot');
+    }
+  }
+
+  document.getElementById('send').addEventListener('click', sendMessage);
+  msgInput.addEventListener('keypress', e => {
+    if (e.key === 'Enter') sendMessage();
+  });
+</script>
+</body>
+</html>

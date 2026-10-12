@@ -1,0 +1,2 @@
+This is an example document for the RAG demo.\n
+You can add more `.txt` files into this directory. The server will index them on startup and when you POST to /reload.
